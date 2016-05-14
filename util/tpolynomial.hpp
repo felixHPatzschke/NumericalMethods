@@ -8,11 +8,16 @@
 #  ifdef _STRING_
 #    define _STD_STRING_INCLUDED_ 1
 #  endif
+#  ifdef _COMPLEX_
+#    define _STD_COMPLEX_INCLUDED_ 1
+#  endif
 #elif defined(__GNUC__) || defined(__clang__)
 #  include <iostream>
 #  include <string>
+#  include <complex>
 #  define _STD_OSTREAM_INCLUDED_ 1
 #  define _STD_STRING_INCLUDED_ 1
+#  define _STD_COMPLEX_INCLUDED_ 1
 #endif
 #ifdef _STD_STRING_INCLUDED_
 #  include <sstream>
@@ -28,30 +33,56 @@ protected:
 	std::vector<_ty> coef;
 
 public:
+	/** creates a new empty polynomial */
 	inline Polynomial()	{ coef = std::vector<_ty>(0); }
+	/** creates a new polynomial with given coefficients */
 	template <typename aux> inline Polynomial(std::initializer_list<aux> list)
 	{
 		coef = std::vector<_ty>(0);
 		for (aux x : list)
 			coef.push_back(_ty(x));
 	}
+	/** creates a new polynomial of i-th degree */
 	inline Polynomial(const unsigned int i)
 	{
 		coef = std::vector<_ty>(i+1);
 	}
+	/** creates a new polynomial of i-th degree, and inserts a leading coefficient */
+	inline Polynomial(const unsigned int i, const _ty leading)
+	{
+		coef = std::vector<_ty>(i+1);
+		coef[i] = leading;
+	}
+	/** creates a new 0th degree polynomial, and inserts a coefficient as the constant value */
 	inline Polynomial(const _ty i) 
 	{ 
 		coef = std::vector<_ty>(1); 
 		coef[0] = i; 
 	}
-	inline Polynomial(const Polynomial<_ty>& other);
-	#ifdef _STD_STRING_INCLUDED_
-	inline Polynomial(std::string str);
-	#endif
+	/** copy constructor */
+	inline Polynomial(const Polynomial<_ty>& other)
+	{
+		coef = std::vector<_ty>(other.coef.size());
+		for(unsigned int i=0; i<coef.size(); ++i)
+			coef[i] = other.coef[i];
+	}
+	/** destructor */
 	inline ~Polynomial(){}
 
-	inline Polynomial<_ty>& operator=(const Polynomial<_ty>& other);
-	template <typename aux> inline Polynomial<_ty>& operator=(std::initializer_list<aux> list);
+	inline Polynomial<_ty>& operator=(const Polynomial<_ty>& other)
+	{
+		coef.resize(other.coef.size())
+		for(unsigned int i=0; i<coef.size(); ++i)
+			coef[i] = other.coef[i];
+		return *this;
+	}
+	template <typename aux> inline Polynomial<_ty>& operator=(std::initializer_list<aux> list)
+	{
+		coef.resize(0);
+		for(aux x : list)
+			coef.push_back(_ty(x));
+		return *this;
+	}
 	template <typename aux> inline Polynomial<_ty>& operator=(const aux scalar)
 	{
 		coef.resize(1);
@@ -62,34 +93,45 @@ public:
 	{
 		Polynomial<_ty> res = Polynomial(coef.size()-1);
 		for(unsigned int i=0; i<coef.size(); ++i)
-		{
 			res.coef[i] = _ty(-1)*coef[i];
-		}
 		return res;
 	}
 	
 	inline Polynomial<_ty>& operator+=(const Polynomial<_ty>& other);
-	template <typename aux> inline Polynomial<_ty>& operator+=(std::initializer_list<aux> list);
-	template <typename aux> inline Polynomial<_ty>& operator+=(const aux scalar);
+	inline Polynomial<_ty>& operator+=(const _ty scalar);
 	
 	inline Polynomial<_ty>& operator-=(const Polynomial<_ty>& other);
-	template <typename aux> inline Polynomial<_ty>& operator-=(std::initializer_list<aux> list);
-	template <typename aux> inline Polynomial<_ty>& operator-=(const aux scalar);
+	inline Polynomial<_ty>& operator-=(const _ty scalar);
 	
+	inline Polynomial<_ty>& operator*=(const _ty scalar);
+	inline Polynomial<_ty>& operator/=(const _ty scalar);
 	
+	inline Polynomial<_ty>& operator*=(const Polynomial<_ty>& other);
 
-	inline _ty operator()(const _ty x)const
+	inline Polynomial<_ty> operator+(const Polynomial<_ty>& other) const;
+	inline Polynomial<_ty> operator+(const _ty scalar) const;
+
+	inline Polynomial<_ty> operator-(const Polynomial<_ty>& other) const;
+	inline Polynomial<_ty> operator-(const _ty scalar) const;
+	
+	inline Polynomial<_ty> operator*(const _ty scalar) const;
+	inline Polynomial<_ty> operator/(const _ty scalar) const;
+
+	inline Polynomial<_ty> operator*(const Polynomial<_ty>& other) const;
+
+	
+	inline _ty operator()(const _ty x) const
 	{
 		_ty res = 0.0;
+		_ty x_pow = _ty(1);
 		for(unsigned int i=0; i<coef.size(); ++i)
 		{
 			if(coef[i]!=_ty(0))
 			{
-				_ty q = coef[i];
-				for(unsigned int j=0; j<i; ++j)
-					q *= x;
+				_ty q = coef[i]*x_pow;
 				res += q;
 			}
+			x_pow *= x;
 		}
 		return res;
 	}
@@ -104,6 +146,7 @@ public:
 	inline Polynomial<_ty> derivative(const int n = 1) const;
 	inline _ty derivativeAt(const _ty x) const;
 	inline Polynomial<_ty> integral(const int n = 1) const;
+	inline _ty integrate(const _ty a, const _ty b) const;
 
 	inline _ty get_coefficient(const unsigned int i) const
 	{
@@ -125,13 +168,57 @@ public:
 	inline std::vector<_ty>& coefficients()	{ return coef; }
 
 	#ifdef _STD_STRING_INCLUDED_
-	inline std::string to_string(const char* argn = "x") const;
+	inline std::string to_string(const char* argn = "x") const
+	{
+		std::stringstream sstr();
+		unsigned int x = 0;
+		for(unsigned int i=coef.size()-1; i>=0; --i)
+		{
+			if(coef[i]!=_ty(0))
+			{
+				if(x==0 && coef[i]<_ty(0))
+					sstr << "-";
+				if(x!=0)
+					sstr << ((coef[i]>_ty(0))?(" + "):(" - "))
+				sstr << ((coef[i]>_ty(0))?(coef[i]):(-(coef[i])));
+				if(i!=0)
+					sstr << argn;
+				if(i>=2)
+					sstr << "^";
+				++x;
+			}
+		}
+		return sstr.str();
+	}
+	#endif
+	#ifdef _STD_OSTREAM_INCLUDED_
+	friend inline std::ostream& operator<<(std::ostream, const Polynomial<_ty>&)
 	#endif
 
 };
 
 #ifdef _STD_OSTREAM_INCLUDED_
-inline std::ostream& operator<<(std::ostream ostr, Polynomial<_ty>& pol);
+inline std::ostream& operator<<(std::ostream ostr, const Polynomial<_ty>& pol)
+{
+	unsigned int x = 0;
+	for(unsigned int i=pol.coef.size()-1; i>=0; --i)
+	{
+		if(pol.coef[i]!=_ty(0))
+		{
+			if(x==0 && pol.coef[i]<_ty(0))
+				ostr << "-";
+			if(x!=0)
+				ostr << ((pol.coef[i]>_ty(0))?(" + "):(" - "))
+			ostr << ((pol.coef[i]>_ty(0))?(pol.coef[i]):(-(pol.coef[i])));
+			if(i!=0)
+				ostr << "x";
+			if(i>=2)
+				ostr << "^";
+			++x;
+		}
+	}
+	return ostr;
+}
 #endif
 
 template <typename _ty>
@@ -161,6 +248,8 @@ inline Polynomial<_ty> Polynomial<_ty>::derivative(const int n)
 
 typedef Polynomial<float> polynomialf;
 typedef Polynomial<double> polynomiald;
-/// typedef Polynomial<std::complex> polynomialc;
+#ifdef _STD_COMPLEX_INCLUDED_
+typedef Polynomial<std::complex> polynomialc;
+#endif
 
 #endif
