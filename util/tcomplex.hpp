@@ -71,13 +71,17 @@ public:
 		im = other.im;
 	}
 #ifdef _STD_COMPLEX_INCLUDED_
-	inline Complex(const std::complex&);
+	inline Complex(const std::complex<_ty>& stdc)
+	{
+		re = stdc.real();
+		im = stdc.imag();
+	}
 #endif
 	/// destructor
 	inline ~Complex() {  }
 
 #ifdef _STD_COMPLEX_INCLUDED_
-	inline operator std::complex() const { return std::complex(re, im); }
+	inline operator std::complex<_ty>() const { return std::complex<_ty>(re, im); }
 #endif
 	template <typename aux> inline Complex<aux> cast() const { return Complex<aux>(static_cast<aux>(re), static_cast<aux>(im), CXARITHMETIC); }
 
@@ -100,6 +104,14 @@ public:
 		this->im = _ty(0);
 		return *this;
 	}
+#ifdef _STD_COMPLEX_INCLUDED_
+	inline Complex<_ty>& operator=(const std::complex<_ty>& stdc)
+	{
+		re = stdc.real();
+		im = stdc.imag();
+		return *this;
+	}
+#endif
 
 	/// indirect assignment operators
 	inline Complex<_ty>& operator+=(const Complex<_ty>& other)
@@ -120,7 +132,12 @@ public:
 		return *this;
 	}
 #ifdef _STD_COMPLEX_INCLUDED_
-	inline Complex<_ty>& operator+=(const std::complex&);
+	inline Complex<_ty>& operator+=(const std::complex<_ty>& stdc)
+	{
+		re += stdc.real();
+		im += stdc.imag();
+		return *this;
+	}
 #endif
 	inline Complex<_ty>& operator-=(const Complex<_ty>& other)
 	{
@@ -140,7 +157,12 @@ public:
 		return *this;
 	}
 #ifdef _STD_COMPLEX_INCLUDED_
-	inline Complex<_ty>& operator-=(const std::complex&);
+	inline Complex<_ty>& operator-=(const std::complex<_ty>& stdc)
+	{
+		re -= stdc.real();
+		im -= stdc.imag();
+		return *this;
+	}
 #endif
 	inline Complex<_ty>& operator*=(const Complex<_ty>& other)
 	{
@@ -166,7 +188,14 @@ public:
 		return *this;
 	}
 #ifdef _STD_COMPLEX_INCLUDED_
-	inline Complex<_ty>& operator*=(const std::complex&);
+	inline Complex<_ty>& operator*=(const std::complex<_ty>& stdc)
+	{
+		_ty _re = (this->re*stdc.real()) - (this->im*stdc.imag());
+		_ty _im = (this->re*stdc.imag()) + (this->im*stdc.real());
+		this->re = _re;
+		this->im = _im;
+		return *this;
+	}
 #endif
 	inline Complex<_ty>& operator/=(const Complex<_ty>& other)
 	{
@@ -189,7 +218,13 @@ public:
 		return *this;
 	}
 #ifdef _STD_COMPLEX_INCLUDED_
-	inline Complex<_ty>& operator/=(const std::complex&);
+	inline Complex<_ty>& operator/=(const std::complex<_ty>& stdc)
+	{
+		_ty a = this->re, b = this->im;
+		this->re = (a*(stdc.real()) + b*(stdc.imag())) / ((stdc.real())*(stdc.real()) + (stdc.imag())*(stdc.imag()));
+		this->im = (b*(stdc.real()) - a*(stdc.imag())) / ((stdc.real())*(stdc.real()) + (stdc.imag())*(stdc.imag()));
+		return *this;
+	}
 #endif
 
 	/// comparison operators
@@ -210,8 +245,14 @@ public:
 		return ((re != arg) || (im != _ty(0)));
 	}
 #ifdef _STD_COMPLEX_INCLUDED_
-	inline int operator==(const std::complex& stdc) const;
-	inline int operator!=(const std::complex& stdc) const;
+	inline int operator==(const std::complex<_ty>& stdc) const
+	{
+		return ((re == stdc.real()) && (im == stdc.imag()));
+	}
+	inline int operator!=(const std::complex<_ty>& stdc) const
+	{
+		return ((re != stdc.real()) || (im != stdc.imag()));
+	}
 #endif
 
 	/// arithmetic operators
@@ -233,7 +274,10 @@ public:
 		return Complex<_ty>(this->re + x, this->im, CXARITHMETIC);
 	}
 #ifdef _STD_COMPLEX_INCLUDED_
-	inline Complex<_ty> operator+(const std::complex&) const;
+	inline Complex<_ty> operator+(const std::complex<_ty>& stdc) const
+	{
+		return Complex<_ty>(re + stdc.real(), im + stdc.imag(), CXARITHMETIC);
+	}
 #endif
 	inline Complex<_ty> operator-(const Complex<_ty>& other) const
 	{
@@ -248,16 +292,30 @@ public:
 		return Complex<_ty>(this->re - x, this->im, CXARITHMETIC);
 	}
 #ifdef _STD_COMPLEX_INCLUDED_
-	inline Complex<_ty> operator-(const std::complex&) const;
+	inline Complex<_ty> operator-(const std::complex<_ty>& stdc) const
+	{
+		return Complex<_ty>(re - stdc.real(), im - stdc.imag(), CXARITHMETIC);
+	}
 #endif
-	inline Complex<_ty> operator*(const Complex<_ty>&) const;
-	template <typename aux> inline Complex<_ty> operator*(std::initializer_list<aux>) const;
+	inline Complex<_ty> operator*(const Complex<_ty>& other) const
+	{
+		return Complex<_ty>(re * other.re - im * other.im, re * other.im + im * other.re, CXARITHMETIC);
+	}
+	template <typename aux> inline Complex<_ty> operator*(std::initializer_list<aux> list) const
+	{
+		_ty a = *(list.begin());
+		_ty b = *(list.begin() + 1);
+		return Complex<_ty>(re*a - im*b, re*b + im*a, CXARITHMETIC);
+	}
 	template <typename aux> inline Complex<_ty> operator*(const aux x) const
 	{
-		return Complex<_ty>(x*re, x*im);
+		return Complex<_ty>(x*re, x*im, CXARITHMETIC);
 	}
 #ifdef _STD_COMPLEX_INCLUDED_
-	inline Complex<_ty> operator*(const std::complex&) const;
+	inline Complex<_ty> operator*(const std::complex<_ty>& stdc) const
+	{
+		return Complex<_ty>(re*stdc.real() - im*stdc.imag(), im*stdc.real() + re*stdc.imag(), CXARITHMETIC);
+	}
 #endif
 	inline Complex<_ty> operator/(const Complex<_ty>&) const;
 	template <typename aux> inline Complex<_ty> operator/(std::initializer_list<aux>) const;
@@ -266,8 +324,12 @@ public:
 		return Complex<_ty>(re / x, im / x);
 	}
 #ifdef _STD_COMPLEX_INCLUDED_
-	inline Complex<_ty> operator/(const std::complex&) const;
+	inline Complex<_ty> operator/(const std::complex<_ty>&) const;
 #endif
+	inline Complex<_ty> pow(const _ty x) const
+	{
+		return Complex<_ty>(::pow(abs(), x), arg()*x, CXPOLAR);
+	}
 
 	/// other operations
 	inline Complex<_ty> sqr() const { return Complex<_t>(re*re - im*im, _ty(2)*re*im); }
@@ -293,7 +355,7 @@ public:
 		else
 		{
 			res[0] = sqrt(re*re + im*im);
-			res[1] = arg();
+			res[1] = atan2(im, re);
 		}
 		return res;
 	}
@@ -314,7 +376,7 @@ public:
 		return *this;
 	}
 
-	inline _ty abs() const { return sqrt(re*re + im*im); }
+	inline _ty abs() const { return ::sqrt(re*re + im*im); }
 	inline _ty arg() const { return atan2(im, re); }
 	inline _ty norm() const { return (re*re + im*im); }
 	inline Complex<_ty> conj() const { return Complex<_ty>(re, -im); }
@@ -326,7 +388,7 @@ public:
 	{
 		std::stringstream sstr();
 		sstr << re;
-		((im > _ty(0)) ? (sstr << "+" << im) : (sstr << "-" << -im));
+		((im >= _ty(0)) ? (sstr << "+" << im) : (sstr << "-" << -im));
 		sstr << "i";
 		return sstr.str();
 	}
@@ -356,7 +418,39 @@ template <typename _ty> inline Complex<_ty> operator/(_ty a, Complex<_ty>& z)
 
 template <typename _ty> inline _ty abs(const Complex<_ty>& z)
 {
-	return sqrt(z.real()*z.real() + z.imag()*z.imag());
+	return ::sqrt(z.real()*z.real() + z.imag()*z.imag());
+}
+template <typename _ty> inline _ty arg(const Complex<_ty>& z)
+{
+	return ::atan2(z.imag(), z.real());
+}
+template <typename _ty> inline _ty norm(const Complex<_ty>& z)
+{
+	return z.real()*z.real() + z.imag()*z.imag();
+}
+template <typename _ty> inline _ty real(const Complex<_ty>& z)
+{
+	return z.real();
+}
+template <typename _ty> inline _ty imag(const Complex<_ty>& z)
+{
+	return z.imag();
+}
+template <typename _ty> inline Complex<_ty> pow(const Complex<_ty>& z, const _ty x)
+{
+	return Complex<_ty>(::pow(abs(z), x), arg(z)*x, CXPOLAR);
+}
+template <typename _ty> inline Complex<_ty> sqr(const Complex<_ty>& z)
+{
+	return Complex<_ty>(z.real()*z.real() - z.imag()*z.imag(), 2 * z.real()*z.imag(), CXARITHMETIC);
+}
+template <typename _ty> inline Complex<_ty> root(const Complex<_ty>& z, const _ty x)
+{
+	return Complex<_ty>(::pow(abs(z), 1.0/x), arg(z)/x, CXPOLAR);
+}
+template <typename _ty> inline Complex<_ty> sqrt(const Complex<_ty>& z)
+{
+	return Complex<_ty>(::sqrt(abs(z)), arg(z) / 2, CXPOLAR);
 }
 
 #ifdef _STD_OSTREAM_INCLUDED_
@@ -364,14 +458,10 @@ template <typename _ty> inline _ty abs(const Complex<_ty>& z)
 template <typename _ty> inline std::ostream& operator<<(std::ostream& ostr, Complex<_ty>& z)
 {
 	ostr << z.real();
-	((z.imag() > _ty(0)) ? (ostr << "+" << z.imag()) : (ostr << "-" << -(z.imag())));
+	((z.imag() >= _ty(0)) ? (ostr << "+" << z.imag()) : (ostr << "-" << -(z.imag())));
 	return (ostr << "i");
 }
 #endif
-
-
-
-
 
 typedef Complex<float> complexf;
 typedef Complex<double> complexd;
