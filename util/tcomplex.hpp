@@ -31,8 +31,13 @@ enum class complex_representation : unsigned int { arithmetic = 1u, polar = 2u }
 #define CXREP complex_representation
 #define CXARITHMETIC complex_representation::arithmetic
 #define CXPOLAR complex_representation::polar
-#define CXREAL 0u
-#define CXIMAG 1u
+enum complex_attribute { none = 0, real = 1, imaginary = 2, absolute_value = 4, argument = 8 };
+#define CXATTRIB complex_attribute
+#define CXNONE complex_attribute::none
+#define CXREAL complex_attribute::real
+#define CXIMAG complex_attribute::imaginary
+#define CXABS complex_attribute::absolute_value
+#define CXARG complex_attribute::argument
 
 template <typename _ty> class Complex
 {
@@ -81,9 +86,15 @@ public:
 	inline ~Complex() {  }
 
 #ifdef _STD_COMPLEX_INCLUDED_
-	inline operator std::complex<_ty>() const { return std::complex<_ty>(re, im); }
+	inline operator std::complex<_ty>() const 
+	{ 
+		return std::complex<_ty>(re, im);
+	}
 #endif
-	template <typename aux> inline Complex<aux> cast() const { return Complex<aux>(static_cast<aux>(re), static_cast<aux>(im), CXARITHMETIC); }
+	template <typename aux> inline Complex<aux> cast() const 
+	{ 
+		return Complex<aux>(static_cast<aux>(re), static_cast<aux>(im), CXARITHMETIC);
+	}
 
 	/// direct assignment operators
 	inline Complex<_ty>& operator=(const Complex<_ty>& other)
@@ -227,7 +238,6 @@ public:
 	}
 #endif
 
-	/// comparison operators
 	inline int operator==(const Complex<_ty>& other) const
 	{
 		return ((re == other.re) && (im == other.im));
@@ -238,11 +248,11 @@ public:
 	}
 	template <typename aux> inline int operator==(const aux arg) const
 	{
-		return ((re == arg) && (im == _ty(0)));
+		return ((re == static_cast<_ty>(arg)) && (im == _ty(0)));
 	}
 	template <typename aux> inline int operator!=(const aux arg) const
 	{
-		return ((re != arg) || (im != _ty(0)));
+		return ((re != static_cast<_ty>(arg)) || (im != _ty(0)));
 	}
 #ifdef _STD_COMPLEX_INCLUDED_
 	inline int operator==(const std::complex<_ty>& stdc) const
@@ -255,23 +265,24 @@ public:
 	}
 #endif
 
-	/// arithmetic operators
-	inline Complex<_ty> operator-() const { return Complex<_ty>(-re, -im) };
+	inline Complex<_ty> operator-() const 
+	{
+		return Complex<_ty>(-re, -im);
+	}
 #ifdef _FHP_OVERLOAD_LOGICAL_NOT_OPERATOR_BY_COMPLEX_CONJUGATE_
-	inline Complex<_ty> operator!() const { return Complex<_ty>(re, -im) };
+	inline Complex<_ty> operator!() const 
+	{ 
+		return Complex<_ty>(re, -im);
+	}
 #endif
 
 	inline Complex<_ty> operator+(const Complex<_ty>& other) const
 	{
 		return Complex<_ty>(this->re + other.re, this->im + other.im, CXARITHMETIC);
 	}
-	template <typename aux> inline Complex<_ty> operator+(std::initializer_list<aux> list) const
-	{
-		return Complex<_ty>(this->re + static_cast<_ty>(*(list.begin())), this->im + static_cast<_ty>(*(list.begin() + 1)), CXARITHMETIC);
-	}
 	template <typename aux> inline Complex<_ty> operator+(const aux x) const
 	{
-		return Complex<_ty>(this->re + x, this->im, CXARITHMETIC);
+		return Complex<_ty>(this->re + static_cast<_ty>(x), this->im, CXARITHMETIC);
 	}
 #ifdef _STD_COMPLEX_INCLUDED_
 	inline Complex<_ty> operator+(const std::complex<_ty>& stdc) const
@@ -283,13 +294,9 @@ public:
 	{
 		return Complex<_ty>(this->re - other.re, this->im - other.im, CXARITHMETIC);
 	}
-	template <typename aux> inline Complex<_ty> operator-(std::initializer_list<aux> list) const
-	{
-		return Complex<_ty>(this->re - static_cast<_ty>(*(list.begin())), this->im - static_cast<_ty>(*(list.begin() + 1)), CXARITHMETIC);
-	}
 	template <typename aux> inline Complex<_ty> operator-(const aux x) const
 	{
-		return Complex<_ty>(this->re - x, this->im, CXARITHMETIC);
+		return Complex<_ty>(this->re - static_cast<_ty>(x), this->im, CXARITHMETIC);
 	}
 #ifdef _STD_COMPLEX_INCLUDED_
 	inline Complex<_ty> operator-(const std::complex<_ty>& stdc) const
@@ -301,15 +308,9 @@ public:
 	{
 		return Complex<_ty>(re * other.re - im * other.im, re * other.im + im * other.re, CXARITHMETIC);
 	}
-	template <typename aux> inline Complex<_ty> operator*(std::initializer_list<aux> list) const
-	{
-		_ty a = *(list.begin());
-		_ty b = *(list.begin() + 1);
-		return Complex<_ty>(re*a - im*b, re*b + im*a, CXARITHMETIC);
-	}
 	template <typename aux> inline Complex<_ty> operator*(const aux x) const
 	{
-		return Complex<_ty>(x*re, x*im, CXARITHMETIC);
+		return Complex<_ty>(static_cast<_ty>(x)*re, static_cast<_ty>(x)*im, CXARITHMETIC);
 	}
 #ifdef _STD_COMPLEX_INCLUDED_
 	inline Complex<_ty> operator*(const std::complex<_ty>& stdc) const
@@ -317,36 +318,57 @@ public:
 		return Complex<_ty>(re*stdc.real() - im*stdc.imag(), im*stdc.real() + re*stdc.imag(), CXARITHMETIC);
 	}
 #endif
-	inline Complex<_ty> operator/(const Complex<_ty>&) const;
-	template <typename aux> inline Complex<_ty> operator/(std::initializer_list<aux>) const;
+	inline Complex<_ty> operator/(const Complex<_ty>& other) const
+	{
+		return Complex<_ty>(
+			(re*(other.re) + im*(other.im)) / ((other.re)*(other.re) + (other.im)*(other.im)), 
+			(im*(other.re) - re*(other.im)) / ((other.re)*(other.re) + (other.im)*(other.im)), 
+			CXARITHMETIC);
+	}
 	template <typename aux> inline Complex<_ty> operator/(const aux x) const
 	{
-		return Complex<_ty>(re / x, im / x);
+		return Complex<_ty>(re / static_cast<_ty>(x), im / static_cast<_ty>(x));
 	}
 #ifdef _STD_COMPLEX_INCLUDED_
-	inline Complex<_ty> operator/(const std::complex<_ty>&) const;
-#endif
-	inline Complex<_ty> pow(const _ty x) const
+	inline Complex<_ty> operator/(const std::complex<_ty>& stdc) const
 	{
+		return Complex<_ty>(
+			(re*(stdc.real()) + im*(stdc.imag())) / ((stdc.real())*(stdc.real()) + (stdc.imag())*(stdc.imag())),
+			(im*(stdc.real()) - re*(stdc.imag())) / ((stdc.real())*(stdc.real()) + (stdc.imag())*(stdc.imag())),
+			CXARITHMETIC);
+	}
+#endif
+	
+	/// other operations
+	inline Complex<_ty> sqr() const 
+	{ 
+		return Complex<_ty>(re*re - im*im, _ty(2)*re*im);
+	}
+	inline Complex<_ty> pow(const _ty x) const 
+	{ 
 		return Complex<_ty>(::pow(abs(), x), arg()*x, CXPOLAR);
 	}
-
-	/// other operations
-	inline Complex<_ty> sqr() const { return Complex<_t>(re*re - im*im, _ty(2)*re*im); }
-	inline Complex<_ty> sqrt() const;
+	inline Complex<_ty> sqrt() const 
+	{ 
+		return Complex<_ty>(::sqrt(abs()), arg() / 2, CXPOLAR);
+	}
+	inline Complex<_ty> root(const _ty x) const 
+	{ 
+		return Complex<_ty>(::pow(abs(), 1 / x), arg() / x, CXPOLAR);
+	}
 
 	/// direct access
-	inline _ty real() const { return re; }
-	inline _ty imag() const { return im; }
-	inline _ty& operator[](unsigned int i)
-	{
-		if (i == CXREAL) return re;
-		else if (i == CXIMAG) return im;
-		else return _ty(0);
+	inline _ty real() const 
+	{ 
+		return re; 
+	}
+	inline _ty imag() const 
+	{ 
+		return im;
 	}
 	inline _ty* get(const CXREP representation = CXARITHMETIC)
 	{
-		_ty* res = static_cast<_ty*>malloc(2 * sizeof(_ty));
+		_ty* res = static_cast<_ty*>(malloc(2 * sizeof(_ty)));
 		if (representation == CXARITHMETIC)
 		{
 			res[0] = re;
@@ -354,13 +376,21 @@ public:
 		}
 		else
 		{
-			res[0] = sqrt(re*re + im*im);
-			res[1] = atan2(im, re);
+			res[0] = ::sqrt(re*re + im*im);
+			res[1] = ::atan2(im, re);
 		}
 		return res;
 	}
-	inline Complex<_ty>& set_real(const _ty x) { re = x; return *this; }
-	inline Complex<_ty>& set_imag(const _ty y) { im = y; return *this; }
+	inline Complex<_ty>& set_real(const _ty x)
+	{ 
+		re = x; 
+		return *this; 
+	}
+	inline Complex<_ty>& set_imag(const _ty y) 
+	{ 
+		im = y; 
+		return *this;
+	}
 	inline Complex<_ty>& set(const _ty x, const _ty y, const CXREP representation = CXARITHMETIC)
 	{
 		if (representation == CXARITHMETIC)
@@ -376,40 +406,66 @@ public:
 		return *this;
 	}
 
-	inline _ty abs() const { return ::sqrt(re*re + im*im); }
-	inline _ty arg() const { return atan2(im, re); }
-	inline _ty norm() const { return (re*re + im*im); }
-	inline Complex<_ty> conj() const { return Complex<_ty>(re, -im); }
+	inline _ty abs() const 
+	{ 
+		return ::sqrt(re*re + im*im); 
+	}
+	inline _ty arg() const 
+	{ 
+		return ::atan2(im, re); 
+	}
+	inline _ty norm() const 
+	{ 
+		return (re*re + im*im); 
+	}
+	inline Complex<_ty> conj() const 
+	{ 
+		return Complex<_ty>(re, -im);
+	}
 
-
+	inline int is_real() const 
+	{ 
+		return (im == _ty(0));
+	}
+	inline int is_imag() const 
+	{ 
+		return (re == _ty(0));
+	}
 
 #ifdef _STD_STRING_INCLUDED_
-	inline std::string to_string() const
+	inline std::string to_string(CXREP rep = CXARITHMETIC) const
 	{
-		std::stringstream sstr();
-		sstr << re;
-		((im >= _ty(0)) ? (sstr << "+" << im) : (sstr << "-" << -im));
-		sstr << "i";
+		std::stringstream sstr;
+		if (rep == CXARITHMETIC)
+		{
+			sstr << re;
+			((im >= _ty(0)) ? (sstr << "+" << im) : (sstr << "-" << -im));
+			sstr << "i";
+		}
+		else
+		{
+			sstr << abs() << "*e^(" << arg() << ")";
+		}
 		return sstr.str();
 	}
 #endif
 
 
 };
-/// some more arithmetic operators
-template <typename _ty> inline Complex<_ty> operator+(_ty a, Complex<_ty>& z)
+/// arithmetic operators, with the primitive data type as first operand
+template <typename _ty> inline Complex<_ty> operator+(const _ty a, const Complex<_ty>& z)
 {
 	return Complex<_ty>(a + z.real(), z.imag(), CXARITHMETIC);
 }
-template <typename _ty> inline Complex<_ty> operator-(_ty a, Complex<_ty>& z)
+template <typename _ty> inline Complex<_ty> operator-(const _ty a, const Complex<_ty>& z)
 {
 	return Complex<_ty>(a - z.real(), -z.imag(), CXARITHMETIC);
 }
-template <typename _ty> inline Complex<_ty> operator*(_ty a, Complex<_ty>& z)
+template <typename _ty> inline Complex<_ty> operator*(const _ty a, const Complex<_ty>& z)
 {
 	return Complex<_ty>(a*z.real(), a*z.imag(), CXARITHMETIC);
 }
-template <typename _ty> inline Complex<_ty> operator/(_ty a, Complex<_ty>& z)
+template <typename _ty> inline Complex<_ty> operator/(const _ty a, const Complex<_ty>& z)
 {
 	Complex<_ty> res(a, _ty(0));
 	res /= z;
@@ -428,11 +484,11 @@ template <typename _ty> inline _ty norm(const Complex<_ty>& z)
 {
 	return z.real()*z.real() + z.imag()*z.imag();
 }
-template <typename _ty> inline _ty real(const Complex<_ty>& z)
+template <typename _ty> inline _ty _real(const Complex<_ty>& z)
 {
 	return z.real();
 }
-template <typename _ty> inline _ty imag(const Complex<_ty>& z)
+template <typename _ty> inline _ty _imag(const Complex<_ty>& z)
 {
 	return z.imag();
 }
@@ -451,6 +507,22 @@ template <typename _ty> inline Complex<_ty> root(const Complex<_ty>& z, const _t
 template <typename _ty> inline Complex<_ty> sqrt(const Complex<_ty>& z)
 {
 	return Complex<_ty>(::sqrt(abs(z)), arg(z) / 2, CXPOLAR);
+}
+template <typename _ty> inline int is_real(const Complex<_ty>& z)
+{
+	return (z.imag() == _ty(0));
+}
+template <typename _ty> inline int is_imag(const Complex<_ty>& z)
+{
+	return (z.real() == _ty(0));
+}
+template <typename _ty> inline Complex<_ty> exp(const Complex<_ty>& z)
+{
+	return Complex<_ty>(exp(z.real()), z.imag(), CXPOLAR);
+}
+template <typename _ty> inline Complex<_ty> conj(const Complex<_ty>& z)
+{
+	return Complex<_ty>(z.real(), -(z.imag()), CXARITHMETIC);
 }
 
 #ifdef _STD_OSTREAM_INCLUDED_
