@@ -23,7 +23,6 @@
 #  include <sstream>
 #endif
 
-
 #include <initializer_list>
 #include <cmath>
 
@@ -38,6 +37,7 @@ enum complex_attribute { none = 0, real = 1, imaginary = 2, absolute_value = 4, 
 #define CXIMAG complex_attribute::imaginary
 #define CXABS complex_attribute::absolute_value
 #define CXARG complex_attribute::argument
+
 
 template <typename _ty> class Complex
 {
@@ -86,13 +86,13 @@ public:
 	inline ~Complex() {  }
 
 #ifdef _STD_COMPLEX_INCLUDED_
-	inline operator std::complex<_ty>() const 
-	{ 
+	inline operator std::complex<_ty>() const
+	{
 		return std::complex<_ty>(re, im);
 	}
 #endif
-	template <typename aux> inline Complex<aux> cast() const 
-	{ 
+	template <typename aux> inline Complex<aux> cast() const
+	{
 		return Complex<aux>(static_cast<aux>(re), static_cast<aux>(im), CXARITHMETIC);
 	}
 
@@ -185,9 +185,8 @@ public:
 	}
 	template <typename aux> inline Complex<_ty>& operator*=(std::initializer_list<aux> list)
 	{
-		std::initializer_list<aux>::iterator lre = list.begin(), lim = list.begin() + 1;
-		_ty _re = (this->re * static_cast<_ty>(*lre)) - (this->im * static_cast<_ty>(*lim));
-		_ty _im = (this->re * static_cast<_ty>(*lim)) + (this->im * static_cast<_ty>(*lre));
+		_ty _re = (this->re * static_cast<_ty>(*(list.begin()))) - (this->im * static_cast<_ty>(*(list.begin()+1)));
+		_ty _im = (this->re * static_cast<_ty>(*(list.begin()+1))) + (this->im * static_cast<_ty>(*(list.begin())));
 		this->re = _re;
 		this->im = _im;
 		return *this;
@@ -265,13 +264,13 @@ public:
 	}
 #endif
 
-	inline Complex<_ty> operator-() const 
+	inline Complex<_ty> operator-() const
 	{
 		return Complex<_ty>(-re, -im);
 	}
 #ifdef _FHP_OVERLOAD_LOGICAL_NOT_OPERATOR_BY_COMPLEX_CONJUGATE_
-	inline Complex<_ty> operator!() const 
-	{ 
+	inline Complex<_ty> operator!() const
+	{
 		return Complex<_ty>(re, -im);
 	}
 #endif
@@ -321,8 +320,8 @@ public:
 	inline Complex<_ty> operator/(const Complex<_ty>& other) const
 	{
 		return Complex<_ty>(
-			(re*(other.re) + im*(other.im)) / ((other.re)*(other.re) + (other.im)*(other.im)), 
-			(im*(other.re) - re*(other.im)) / ((other.re)*(other.re) + (other.im)*(other.im)), 
+			(re*(other.re) + im*(other.im)) / ((other.re)*(other.re) + (other.im)*(other.im)),
+			(im*(other.re) - re*(other.im)) / ((other.re)*(other.re) + (other.im)*(other.im)),
 			CXARITHMETIC);
 	}
 	template <typename aux> inline Complex<_ty> operator/(const aux x) const
@@ -338,37 +337,37 @@ public:
 			CXARITHMETIC);
 	}
 #endif
-	
+
 	/// other operations
-	inline Complex<_ty> sqr() const 
-	{ 
+	inline Complex<_ty> sqr() const
+	{
 		return Complex<_ty>(re*re - im*im, _ty(2)*re*im);
 	}
-	inline Complex<_ty> pow(const _ty x) const 
-	{ 
+	inline Complex<_ty> pow(const _ty x) const
+	{
 		return Complex<_ty>(::pow(abs(), x), arg()*x, CXPOLAR);
 	}
-	inline Complex<_ty> sqrt() const 
-	{ 
+	inline Complex<_ty> sqrt() const
+	{
 		return Complex<_ty>(::sqrt(abs()), arg() / 2, CXPOLAR);
 	}
-	inline Complex<_ty> root(const _ty x) const 
-	{ 
+	inline Complex<_ty> root(const _ty x) const
+	{
 		return Complex<_ty>(::pow(abs(), 1 / x), arg() / x, CXPOLAR);
 	}
 
 	/// direct access
-	inline _ty real() const 
-	{ 
-		return re; 
+	inline _ty real() const
+	{
+		return re;
 	}
-	inline _ty imag() const 
-	{ 
+	inline _ty imag() const
+	{
 		return im;
 	}
 	inline _ty* get(const CXREP representation = CXARITHMETIC)
 	{
-		_ty* res = static_cast<_ty*>(malloc(2 * sizeof(_ty)));
+		_ty res[2];
 		if (representation == CXARITHMETIC)
 		{
 			res[0] = re;
@@ -382,13 +381,13 @@ public:
 		return res;
 	}
 	inline Complex<_ty>& set_real(const _ty x)
-	{ 
-		re = x; 
-		return *this; 
+	{
+		re = x;
+		return *this;
 	}
-	inline Complex<_ty>& set_imag(const _ty y) 
-	{ 
-		im = y; 
+	inline Complex<_ty>& set_imag(const _ty y)
+	{
+		im = y;
 		return *this;
 	}
 	inline Complex<_ty>& set(const _ty x, const _ty y, const CXREP representation = CXARITHMETIC)
@@ -406,29 +405,29 @@ public:
 		return *this;
 	}
 
-	inline _ty abs() const 
-	{ 
-		return ::sqrt(re*re + im*im); 
+	inline _ty abs() const
+	{
+		return ::sqrt(re*re + im*im);
 	}
-	inline _ty arg() const 
-	{ 
-		return ::atan2(im, re); 
+	inline _ty arg() const
+	{
+		return ::atan2(im, re);
 	}
-	inline _ty norm() const 
-	{ 
-		return (re*re + im*im); 
+	inline _ty norm() const
+	{
+		return (re*re + im*im);
 	}
-	inline Complex<_ty> conj() const 
-	{ 
+	inline Complex<_ty> conj() const
+	{
 		return Complex<_ty>(re, -im);
 	}
 
-	inline int is_real() const 
-	{ 
+	inline int is_real() const
+	{
 		return (im == _ty(0));
 	}
-	inline int is_imag() const 
-	{ 
+	inline int is_imag() const
+	{
 		return (re == _ty(0));
 	}
 
