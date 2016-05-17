@@ -47,11 +47,13 @@ protected:
 
 public:
 	/// constructor
+	/** default constructor */
 	inline Complex()
 	{
 		re = _ty(0);
 		im = _ty(0);
 	}
+	/** constructor from base types */
 	inline Complex(const _ty x, const _ty y = _ty(0), const CXREP representation = CXARITHMETIC)
 	{
 		if (representation == CXARITHMETIC)
@@ -65,50 +67,58 @@ public:
 			im = x * sin(y);
 		}
 	}
+	/** constructor from initializer_list */
 	template <typename aux> inline Complex(std::initializer_list<aux> list)
 	{
 		re = static_cast<_ty>(*(list.begin()));
 		im = static_cast<_ty>(*(list.begin() + 1));
 	}
+	/** copy constructor */
 	inline Complex(const Complex<_ty>& other)
 	{
 		re = other.re;
 		im = other.im;
 	}
 #ifdef _STD_COMPLEX_INCLUDED_
+	/** constructor from std::complex */
 	inline Complex(const std::complex<_ty>& stdc)
 	{
 		re = stdc.real();
 		im = stdc.imag();
 	}
 #endif
-	/// destructor
+	/** destructor */
 	inline ~Complex() {  }
 
 #ifdef _STD_COMPLEX_INCLUDED_
+	/** casts a Complex to a std::complex */
 	inline operator std::complex<_ty>() const
 	{
 		return std::complex<_ty>(re, im);
 	}
 #endif
+	/** casts between base data types */
 	template <typename aux> inline Complex<aux> cast() const
 	{
 		return Complex<aux>(static_cast<aux>(re), static_cast<aux>(im), CXARITHMETIC);
 	}
 
 	/// direct assignment operators
+	/** Assignment operator */
 	inline Complex<_ty>& operator=(const Complex<_ty>& other)
 	{
 		this->re = other.re;
 		this->im = other.im;
 		return *this;
 	}
+	/** Assignment operator (initializer_list) */
 	template <typename aux> inline Complex<_ty>& operator=(std::initializer_list<aux> list)
 	{
 		re = static_cast<_ty>(*(list.begin()));
 		im = static_cast<_ty>(*(list.begin() + 1));
 		return *this;
 	}
+	/** Assignment operator (real number) */
 	inline Complex<_ty>& operator=(const _ty x)
 	{
 		this->re = x;
@@ -116,6 +126,7 @@ public:
 		return *this;
 	}
 #ifdef _STD_COMPLEX_INCLUDED_
+	/** Assignment operator (std::complex) */
 	inline Complex<_ty>& operator=(const std::complex<_ty>& stdc)
 	{
 		re = stdc.real();
@@ -237,38 +248,46 @@ public:
 	}
 #endif
 
+	/** Comparison */
 	inline int operator==(const Complex<_ty>& other) const
 	{
 		return ((re == other.re) && (im == other.im));
 	}
+	/** Comparison */
 	inline int operator!=(const Complex<_ty>& other) const
 	{
 		return ((re != other.re) || (im != other.im));
 	}
+	/** Comparison of real part */
 	template <typename aux> inline int operator==(const aux arg) const
 	{
 		return ((re == static_cast<_ty>(arg)) && (im == _ty(0)));
 	}
+	/** Comparison of real part */
 	template <typename aux> inline int operator!=(const aux arg) const
 	{
 		return ((re != static_cast<_ty>(arg)) || (im != _ty(0)));
 	}
 #ifdef _STD_COMPLEX_INCLUDED_
+	/** Comparison with std::complex */
 	inline int operator==(const std::complex<_ty>& stdc) const
 	{
 		return ((re == stdc.real()) && (im == stdc.imag()));
 	}
+	/** Comparison with std::complex */
 	inline int operator!=(const std::complex<_ty>& stdc) const
 	{
 		return ((re != stdc.real()) || (im != stdc.imag()));
 	}
 #endif
 
+	/** Negative */
 	inline Complex<_ty> operator-() const
 	{
 		return Complex<_ty>(-re, -im);
 	}
 #ifdef _FHP_OVERLOAD_LOGICAL_NOT_OPERATOR_BY_COMPLEX_CONJUGATE_
+	/** Complex conjugate */
 	inline Complex<_ty> operator!() const
 	{
 		return Complex<_ty>(re, -im);
@@ -339,32 +358,39 @@ public:
 #endif
 
 	/// other operations
+	/** Square of the complex number */
 	inline Complex<_ty> sqr() const
 	{
 		return Complex<_ty>(re*re - im*im, _ty(2)*re*im);
 	}
+	/** The complex number, raised to the power of the argument */
 	inline Complex<_ty> pow(const _ty x) const
 	{
 		return Complex<_ty>(::pow(abs(), x), arg()*x, CXPOLAR);
 	}
+	/** Square root of the complx number */
 	inline Complex<_ty> sqrt() const
 	{
 		return Complex<_ty>(::sqrt(abs()), arg() / 2, CXPOLAR);
 	}
+	/** x-th root of the complx number */
 	inline Complex<_ty> root(const _ty x) const
 	{
 		return Complex<_ty>(::pow(abs(), 1 / x), arg() / x, CXPOLAR);
 	}
 
 	/// direct access
+	/** returns the real part */
 	inline _ty real() const
 	{
 		return re;
 	}
+	/** returns the imaginary part */
 	inline _ty imag() const
 	{
 		return im;
 	}
+	/** converts the complex number to an array */
 	inline _ty* get(const CXREP representation = CXARITHMETIC)
 	{
 		_ty res[2];
@@ -380,16 +406,19 @@ public:
 		}
 		return res;
 	}
+	/** manipulates the real part */
 	inline Complex<_ty>& set_real(const _ty x)
 	{
 		re = x;
 		return *this;
 	}
+	/** manipulates the imaginary part */
 	inline Complex<_ty>& set_imag(const _ty y)
 	{
 		im = y;
 		return *this;
 	}
+	/** manipulates the components directly */
 	inline Complex<_ty>& set(const _ty x, const _ty y, const CXREP representation = CXARITHMETIC)
 	{
 		if (representation == CXARITHMETIC)
@@ -405,33 +434,40 @@ public:
 		return *this;
 	}
 
+	/** absolute value */
 	inline _ty abs() const
 	{
 		return ::sqrt(re*re + im*im);
 	}
+	/** complex argument */
 	inline _ty arg() const
 	{
 		return ::atan2(im, re);
 	}
+	/** square of the absolute value */
 	inline _ty norm() const
 	{
 		return (re*re + im*im);
 	}
+	/** complex conjugate */
 	inline Complex<_ty> conj() const
 	{
 		return Complex<_ty>(re, -im);
 	}
 
+	/** returns true if the imaginary part is zero */
 	inline int is_real() const
 	{
 		return (im == _ty(0));
 	}
+	/** returns true if the real part is zero */
 	inline int is_imag() const
 	{
 		return (re == _ty(0));
 	}
 
 #ifdef _STD_STRING_INCLUDED_
+	/** returns a string representation of the complex number */
 	inline std::string to_string(CXREP rep = CXARITHMETIC) const
 	{
 		std::stringstream sstr;
