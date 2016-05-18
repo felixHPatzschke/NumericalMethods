@@ -117,16 +117,12 @@ public:
 
 	inline _ty operator()(const _ty x) const
 	{
-		_ty res = 0.0;
-		_ty x_pow = _ty(1);
-		for (unsigned int i = 0; i < coef.size(); ++i)
+		_ty res = _ty(0);
+		for(unsigned int i = coef.size()-1; i >= 0; --i)
 		{
-			if (coef[i] != _ty(0))
-			{
-				_ty q = coef[i] * x_pow;
-				res += q;
-			}
-			x_pow *= x;
+			
+			res += coef[i];
+			res *= x;
 		}
 		return res;
 	}
