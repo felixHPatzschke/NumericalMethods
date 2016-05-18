@@ -118,12 +118,13 @@ public:
 	inline _ty operator()(const _ty x) const
 	{
 		_ty res = _ty(0);
-		for(unsigned int i = coef.size()-1; i >= 0; --i)
+		for(unsigned int i = coef.size()-1; i > 0; --i)
 		{
 			
 			res += coef[i];
 			res *= x;
 		}
+		res += coef[0];
 		return res;
 	}
 	inline Polynomial<_ty> operator[](const unsigned int i) const
