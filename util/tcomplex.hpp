@@ -479,7 +479,7 @@ public:
 		}
 		else
 		{
-			sstr << abs() << "*e^(" << arg() << ")";
+			sstr << abs() << "*e^(" << arg() << "i)";
 		}
 		return sstr.str();
 	}
