@@ -46,6 +46,7 @@ protected:
 	_ty re, im;
 
 public:
+	typedef _ty value_type;
 	/// constructor
 	/** default constructor */
 	inline Complex()
@@ -562,7 +563,7 @@ template <typename _ty> inline Complex<_ty> conj(const Complex<_ty>& z)
 
 #ifdef _STD_OSTREAM_INCLUDED_
 /// output override
-template <typename _ty> inline std::ostream& operator<<(std::ostream& ostr, Complex<_ty>& z)
+template <typename _ty> inline std::ostream& operator<<(std::ostream& ostr, const Complex<_ty>& z)
 {
 	ostr << z.real();
 	((z.imag() >= _ty(0)) ? (ostr << "+" << z.imag()) : (ostr << "-" << -(z.imag())));
