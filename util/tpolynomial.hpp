@@ -43,6 +43,8 @@ inline std::ostream& ostream_lshift(std::ostream& ostr, const _ty t, const unsig
 template <typename _ty>
 inline std::ostream& ostream_lshift(std::ostream& ostr, const _ty t, const unsigned int x, const std::false_type&)
 {
+	if (x != 0)
+		ostr << " + ";
 	return (ostr << t);
 }
 #endif
@@ -86,7 +88,7 @@ public:
 	/** destructor */
 	inline ~Polynomial() {}
 
-	template <typename aux> Polynomial<aux> cast() const
+	template <typename aux> inline Polynomial<aux> cast() const
 	{
 		Polynomial<aux> res = Polynomial<aux>();
 		for (unsigned int i = 0; i < coef.size(); ++i)
@@ -123,27 +125,114 @@ public:
 		return res;
 	}
 
-	inline Polynomial<_ty>& operator+=(const Polynomial<_ty>& other);
-	template <typename aux> inline Polynomial<_ty>& operator+=(const aux scalar);
+	inline Polynomial<_ty>& operator+=(const Polynomial<_ty>& other)
+	{
+		for (unsigned int i = 0; i <= other.coef.size(); ++i)
+			this->operator[](i) += other.get_coefficient(i);
+		return *this;
+	}
+	template <typename aux> inline Polynomial<_ty>& operator+=(const aux scalar)
+	{
+		this->coef[0] += _ty(scalar);
+		return *this;
+	}
 
-	inline Polynomial<_ty>& operator-=(const Polynomial<_ty>& other);
-	template <typename aux> inline Polynomial<_ty>& operator-=(const aux scalar);
+	inline Polynomial<_ty>& operator-=(const Polynomial<_ty>& other)
+	{
+		for (unsigned int i = 0; i < other.coef.size(); ++i)
+			this->operator[](i) -= other.get_coefficient(i);
+		return *this;
+	}
+	template <typename aux> inline Polynomial<_ty>& operator-=(const aux scalar)
+	{
+		this->coef[0] -= _ty(scalar);
+		return *this;
+	}
 
-	inline Polynomial<_ty>& operator*=(const _ty scalar);
-	template <typename aux> inline Polynomial<_ty>& operator/=(const aux scalar);
+	template <typename aux> inline Polynomial<_ty>& operator*=(const aux scalar)
+	{
+		for (_ty& x : this->coef)
+			x *= _ty(scalar);
+		return *this;
+	}
+	template <typename aux> inline Polynomial<_ty>& operator/=(const aux scalar)
+	{
+		for (_ty& x : this->coef)
+			x /= _ty(scalar);
+		return *this;
+	}
 
-	inline Polynomial<_ty>& operator*=(const Polynomial<_ty>& other);
+	inline Polynomial<_ty>& operator*=(const Polynomial<_ty>& other)
+	{
+		Polynomial<_ty> res = 0;
+		Polynomial<_ty> h;
+		for (unsigned int i = 0; i < other.coef.size(); ++i)
+		{
+			h = 0;
+			for (unsigned int j = 0; j < this->coef.size(); ++j)
+				h[j + i] = this->get_coefficient(j);
+			res += (h *= other.get_coefficient(i));
+		}
+		this->operator=(res);
+		return *this;
+	}
 
-	inline Polynomial<_ty> operator+(const Polynomial<_ty>& other) const;
-	template <typename aux> inline Polynomial<_ty> operator+(const aux scalar) const;
+	inline Polynomial<_ty> operator+(const Polynomial<_ty>& other) const
+	{
+		Polynomial<_ty> res = *this;
+		for (unsigned int i = 0; i < other.coef.size(); ++i)
+			this->operator[](i) += other.get_coefficient(i);
+		return res;
+	}
+	template <typename aux> inline Polynomial<_ty> operator+(const aux scalar) const
+	{
+		Polynomial<_ty> res = *this;
+		res[0] += _ty(scalar);
+		return res;
+	}
 
-	inline Polynomial<_ty> operator-(const Polynomial<_ty>& other) const;
-	template <typename aux> inline Polynomial<_ty> operator-(const aux scalar) const;
+	inline Polynomial<_ty> operator-(const Polynomial<_ty>& other) const
+	{
+		Polynomial<_ty> res = *this;
+		for (unsigned int i = 0; i < other.coef.size(); ++i)
+			this->operator[](i) += other.get_coefficient(i);
+		return res;
+	}
+	template <typename aux> inline Polynomial<_ty> operator-(const aux scalar) const
+	{
+		Polynomial<_ty> res = *this;
+		res[0] -= _ty(scalar);
+		return res;
+	}
 
-	inline Polynomial<_ty> operator*(const _ty scalar) const;
-	template <typename aux> inline Polynomial<_ty> operator/(const aux scalar) const;
+	template <typename aux> inline Polynomial<_ty> operator*(const aux scalar) const
+	{
+		Polynomial<_ty> res = *this;
+		for (_ty& x : res.coef)
+			x *= _ty(scalar);
+		return res;
+	}
+	template <typename aux> inline Polynomial<_ty> operator/(const aux scalar) const
+	{
+		Polynomial<_ty> res = *this;
+		for (_ty& x : res.coef)
+			x *= _ty(scalar);
+		return res;
+	}
 
-	inline Polynomial<_ty> operator*(const Polynomial<_ty>& other) const;
+	inline Polynomial<_ty> operator*(const Polynomial<_ty>& other) const
+	{
+		Polynomial<_ty> res = 0;
+		Polynomial<_ty> h;
+		for (unsigned int i = 0; i < other.coef.size(); ++i)
+		{
+			h = 0;
+			for (unsigned int j = 0; j < this->coef.size(); ++j)
+				h[j + i] = this->get_coefficient(j);
+			res += (h *= other.get_coefficient(i));
+		}
+		return res;
+	}
 
 
 	template <typename aux> inline _ty operator()(const aux x) const
@@ -170,8 +259,8 @@ public:
 	{
 		if (n == 0)
 			return Polynomial<_ty>(*this);
-		//else if (n < 0)
-		//	return integral(-n);
+		else if (n < 0)
+			return integral(-n);
 		else if (n > degree())
 			return Polynomial<_ty>(_ty(0));
 		else if (n == 1)
@@ -179,7 +268,7 @@ public:
 			Polynomial<_ty> res(0u);
 			for (unsigned int i = 1; i < coef.size(); ++i)
 			{
-				res.set_coefficient(i - 1, coef[i] * i);
+				res.set_coefficient(i - 1, coef[i] * _ty(i));
 			}
 			return res;
 		}
@@ -187,9 +276,33 @@ public:
 			return derivative().derivative(n - 1);
 		// TODO: get rid of recursion
 	}
-	inline _ty derivativeAt(const _ty x) const;
-	inline Polynomial<_ty> integral(const int n = 1) const;
-	inline _ty integrate(const _ty a, const _ty b) const;
+	template <typename aux>	inline _ty derivativeAt(const aux x) const
+	{
+		// TODO: find a more efficient way
+		return this->derivative().operator()(x);
+	}
+	inline Polynomial<_ty> integral(const int n = 1) const
+	{
+		if (n == 0)
+			return Polynomial<_ty>(*this);
+		else if (n < 0)
+			return derivative(-n);
+		else if (n == 1)
+		{
+			Polynomial<_ty> res(0);
+			for (unsigned int i = 0; i < coef.size(); ++i)
+				res.set_coefficient(i + 1, coef[i] / _ty(i + 1));
+			return res;
+		}
+		else
+			return integral().integral(n - 1);
+		// TODO: get rid of recursion
+	}
+	template <typename aux> inline _ty integrate(const aux a, const aux b) const
+	{
+		Polynomial<_ty> F = integral();
+		return (F(b) - F(a));
+	}
 
 	inline _ty get_coefficient(const unsigned int i) const
 	{
@@ -197,6 +310,13 @@ public:
 			return coef[i];
 		else
 			return _ty(0);
+	}
+	inline Polynomial<_ty> get_monomial(const unsigned int i) const
+	{
+		Polynomial<_ty> res = 0;
+		if (i < coef.size())
+			res[i] = coef[i];
+		return res;
 	}
 	template <typename aux> inline Polynomial<_ty>& set_coefficient(const unsigned int i, const aux arg)
 	{
@@ -227,7 +347,7 @@ public:
 		{
 			if (coef[i] != _ty(0))
 			{
-				ostream_lshift(sstr, coef[i], x, sfinae::supports<std::less<>(_ty, _ty)>());
+				ostream_lshift(sstr, coef[i], x, is_ineq_supported(_ty));
 				if (i != 0)
 					sstr << argn;
 				if (i >= 2)
@@ -238,6 +358,13 @@ public:
 		return sstr.str();
 	}
 #endif
+
+	inline Polynomial<_ty>& shrink()
+	{
+		while (coef[coef.size() - 1] == _ty(0))
+			coef.pop_back();
+		return *this;
+	}
 
 };
 
@@ -254,7 +381,7 @@ inline std::ostream& operator<<(std::ostream& ostr, const Polynomial<_ty>& pol)
 	{
 		if (pol.get_coefficient(i) != _ty(0))
 		{
-			ostream_lshift(ostr, pol.get_coefficient(i), x, sfinae::supports<std::less<>(_ty, _ty)>());
+			ostream_lshift(ostr, pol.get_coefficient(i), x, is_ineq_supported(_ty));
 			if (i != 0)
 				ostr << "x";
 			if (i >= 2)
@@ -266,11 +393,12 @@ inline std::ostream& operator<<(std::ostream& ostr, const Polynomial<_ty>& pol)
 }
 #endif
 
+
 void make_sine(Polynomial<double>* pol, unsigned int order)
 {
 	pol->operator=(0);
 	double f = 1;
-	for (unsigned int i = 0; i < order; ++i)
+	for (unsigned int i = 0; i <= order; ++i)
 	{
 		if (i > 0)
 			f /= i;
@@ -282,11 +410,23 @@ void make_cosine(Polynomial<double>* pol, unsigned int order)
 {
 	pol->operator=(0);
 	double f = 1;
-	for (unsigned int i = 0; i < order; ++i)
+	for (unsigned int i = 0; i <= order; ++i)
 	{
 		if (i > 0)
 			f /= i;
 		pol->operator[](i) = (i % 2 != 0) ? (0.0) : (((((i / 2) % 2) == 0) ? (1) : (-1))*f);
+	}
+}
+
+void make_exp(Polynomial<double>* pol, unsigned int order)
+{
+	pol->operator=(0);
+	double f = 1;
+	for (unsigned int i = 0; i <= order; ++i)
+	{
+		if (i > 0)
+			f /= i;
+		pol->operator[](i) = f;
 	}
 }
 
@@ -311,6 +451,26 @@ template <typename _cbty> inline int has_imaginary_coefficients(const Polynomial
 			return false;
 	return true;
 }
+#endif
+#ifdef _FHP_TCOMPLEX_HPP_INCLUDED_
+typedef Polynomial<complexd> polynomialcxd;
+typedef Polynomial<complexf> polynomialcxf;
+
+template <typename _cbty> inline int has_real_coefficients(const Polynomial<Complex<_cbty>>& pol)
+{
+	for (unsigned int i = 0; i <= pol.degree(); ++i)
+		if (!(static_cast<Complex<_cbty>>(pol.get_coefficient(i)).is_real()))
+			return false;
+	return true;
+}
+template <typename _cbty> inline int has_imaginary_coefficients(const Polynomial<Complex<_cbty>>& pol)
+{
+	for (unsigned int i = 0; i <= pol.degree(); ++i)
+		if (!(static_cast<Complex<_cbty>>(pol.get_coefficient(i)).is_imag()))
+			return false;
+	return true;
+}
+
 #endif
 
 #endif

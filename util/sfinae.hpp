@@ -1,7 +1,6 @@
-#ifndef _FHP_SFINAE_HPP_
-#define _FHP_SFINAE_HPP_
+#ifndef _FHP_SFINAE_HPP_INCLUDED_
+#define _FHP_SFINAE_HPP_INCLUDED_
 
-#include <array>
 #include <type_traits>
 
 
@@ -16,7 +15,6 @@ namespace sfinae
 
 }
 
-
-
+#define is_ineq_supported(type) sfinae::supports<std::less<>(type, type)>()
 
 #endif
