@@ -57,6 +57,9 @@ protected:
 	std::vector<_ty> coef;
 
 public:
+	typedef _ty value_type;
+	typedef typename std::vector<_ty>::const_iterator const_iterator;
+	typedef typename std::vector<_ty>::iterator iterator;
 	/** creates a new empty polynomial */
 	inline Polynomial() { coef = std::vector<_ty>(1,0); }
 	/** creates a new polynomial with given coefficients */
@@ -365,7 +368,14 @@ public:
 			coef.pop_back();
 		return *this;
 	}
-
+	inline const_iterator begin() const
+	{
+		return coef.begin();
+	}
+	inline const_iterator end() const
+	{
+		return coef.end();
+	}
 };
 
 #ifdef _STD_OSTREAM_INCLUDED_
