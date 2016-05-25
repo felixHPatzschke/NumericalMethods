@@ -281,8 +281,15 @@ public:
 	}
 	template <typename aux>	inline _ty derivativeAt(const aux x) const
 	{
-		// TODO: find a more efficient way
-		return this->derivative().operator()(x);
+		_ty res = _ty(0);
+		for (unsigned int i = coef.size() - 1; i > 1; --i)
+		{
+
+			res += i*coef[i];
+			res *= _ty(x);
+		}
+		res += coef[1];
+		return res; 
 	}
 	inline Polynomial<_ty> integral(const int n = 1) const
 	{
@@ -404,7 +411,7 @@ inline std::ostream& operator<<(std::ostream& ostr, const Polynomial<_ty>& pol)
 #endif
 
 
-void make_sine(Polynomial<double>* pol, unsigned int order)
+void make_sin(Polynomial<double>* pol, unsigned int order)
 {
 	pol->operator=(0);
 	double f = 1;
@@ -416,7 +423,7 @@ void make_sine(Polynomial<double>* pol, unsigned int order)
 	}
 }
 
-void make_cosine(Polynomial<double>* pol, unsigned int order)
+void make_cos(Polynomial<double>* pol, unsigned int order)
 {
 	pol->operator=(0);
 	double f = 1;
