@@ -447,6 +447,23 @@ void make_exp(Polynomial<double>* pol, unsigned int order)
 	}
 }
 
+template <typename _ty> void interpolate_lagrange(std::vector<_ty>& x, std::vector<_ty>& y, Polynomial<_ty>* pol)
+{
+	pol->operator=(0);
+	Polynomial<_ty> l;
+	for (unsigned int i = 0; i < x.size(); ++i)
+	{
+		l = 1;
+		for (unsigned int j = 0; j < x.size(); ++j)
+		{
+			if (j != i)
+				l *= Polynomial<_ty>({ -(x[j]), 1.0 }) / (x[i] - x[j]);
+		}
+		l *= ((y[i]) / l(x[i]));
+		pol->operator+=(l);
+	}
+}
+
 
 typedef Polynomial<float> polynomialf;
 typedef Polynomial<double> polynomiald;
