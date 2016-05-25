@@ -1,4 +1,3 @@
-
 #include <cstdlib>
 #include <cmath>
 #include <iostream>
@@ -11,6 +10,8 @@
 #define x1 (x[i-2])
 #define x2 (x[i-1])
 #define x3 (x[i])
+#define init(a,b,c,d,e,f) x.resize(0);	x.push_back(std::complex<double>(a,b));	x.push_back(std::complex<double>(c,d));	x.push_back(std::complex<double>(e,f))
+
 
 typedef _ty(*Function)(const _ty&);
 
@@ -31,7 +32,6 @@ int find_root(Function f, std::vector<_ty>& x)
 	_ty xk;
 	_ty y1, y2, y3;
 	_ty a, b, c;
-
 	while (abs(f(x[i])) >= ETA)
 	{
 		y1 = f(x1);
@@ -42,7 +42,7 @@ int find_root(Function f, std::vector<_ty>& x)
 		b = (y1 - y3) / (x1 - x3) - a*(x1 - x3);
 		c = y3;
 
-		xk = -2.0*c / (b + static_cast<_ty>(t_sign(b.real()))*sqrt(b*b - 4.0*a*c));
+		xk = x3-(2.0*c / (b + static_cast<_ty>(t_sign(b.real()))*sqrt(b*b - 4.0*a*c)));
 		x.push_back(xk);
 		++i;
 		std::cout << "\r" << (i - 2) << ": " << f(xk) << "\t\t";
@@ -54,21 +54,20 @@ int main()
 {
 	std::cout << std::setprecision(12);
 	std::vector<_ty> x = std::vector<_ty>(0);
-	x.push_back(std::complex<double>(0));
 
-	unsigned int c = 0;
-	while (abs(x[x.size()-1].real()-5)>ETA && c<32)
-	{
-		x.resize(0);
-		x.push_back(std::complex<double>(rand(), rand()));
-		x.push_back(std::complex<double>(rand(), rand()));
-		x.push_back(std::complex<double>(rand(), rand()));
-		int i = find_root(_f, x);
-		std::cout << "\rRoot " << c++ << " found: " << x[x.size() - 1] << " - " << i << " Iterations\t\t" << std::endl;
-	}
+	int i;
+
+	init(0, 0, 1, 0, 0, -9);
+	i = find_root(_f, x);
+	std::cout << "\rRoot 1: " << x[x.size() - 1] << " - " << i << " Iterations\t\t\t" << std::endl;
+	init(-1, 0, 0, 0, 1, 0);
+	i = find_root(_f, x);
+	std::cout << "\rRoot 2: " << x[x.size() - 1] << " - " << i << " Iterations\t\t\t" << std::endl;
+	init(4, 0, 5, 0, 6, 0);
+	i = find_root(_f, x);
+	std::cout << "\rRoot 3: " << x[x.size() - 1] << " - " << i << " Iterations\t\t\t" << std::endl;
 
 	std::cout << "\nPress [ENTER] to exit the program.\nIronic,isn't it?" << std::endl;
 	std::cin.get();
     return EXIT_SUCCESS;
 }
-
